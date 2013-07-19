@@ -65,9 +65,13 @@
          `(intern '~model-sym '~fn-name ~fn-name))
 
      ; Generate a class from the ns
-     (gen-class :name    ~class-sym
-                :extends StateModel
-                :methods ~method-specs
-                :prefix ""
-                :impl-ns '~model-sym)
+     (binding [*compile-files* true]
+       (gen-class :name    ~class-sym
+                  :extends StateModel
+                  :methods ~method-specs
+                  :prefix ""
+                  :impl-ns '~model-sym))
      '~class-sym)))
+
+(prn (state-model-class (on off "off") (off on "on")))
+(prn (new com.aphyr.Foo))
