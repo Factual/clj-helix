@@ -9,3 +9,13 @@
             (:off :on  [part msg ctx] [x :on part]))
         m (.createNewStateModel f "p1")]
     (is (= [2 :on "p1"] (.onBecomeonFromoff m nil nil)))))
+
+(deftest illegal-state-names
+  (is (thrown? IllegalArgumentException
+               (state-model-factory [:evil!])))
+  (is (thrown? IllegalArgumentException
+               (state-model-factory [:ok (keyword "LMAO if")])))
+  (is (thrown? IllegalArgumentException
+               (state-model-factory [:start_up :shut_down]
+                 (:start_up :aha$no [p m c])))))
+                                    

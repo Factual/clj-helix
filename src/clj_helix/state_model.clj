@@ -14,9 +14,21 @@
             [tailrecursion.javastar :as javastar]
             clojure.pprint))
 
+(defn validate-state
+  "Throws if the state isn't a valid state name."
+  [state]
+  (if (and (or (keyword? state)
+               (string? state))
+           (re-matches #"^[A-Za-z][A-Za-z0-9_]*$" (name state)))
+    state
+    (throw (IllegalArgumentException.
+             (str "Invalid state: " (pr-str state))))))
+
 (defn transition-name
   "A method name (string) for a state transition."
   [old new]
+  (validate-state old)
+  (validate-state new)
   (str "onBecome" (name new) "From" (name old)))
 
 (defn state-transition-code
@@ -44,10 +56,12 @@
   (let [class-name (str (gensym "state_model_"))
         ; Nothing says fun like mangling strings through three layers of
         ; languages!
-        initial-state (name (:initial-state opts))
+        initial-state (validate-state (name (:initial-state opts)))
+        
         states-str  (str "{"
                          (->> opts
                               :states
+                              (map validate-state)
                               (map #(str "'" (name %) "'"))
                               (interpose ",")
                               (apply str))
