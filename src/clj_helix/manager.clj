@@ -17,14 +17,6 @@
     :participant            InstanceType/PARTICIPANT
     :spectator              InstanceType/SPECTATOR))
 
-(defn ^HelixManager helix-manager
-  "Creates a new Helix manager for a given cluster. Takes a zookeeper connection string, the cluster name, the kind of instance to become (:controller, :participant, :spectator, etc), and an instance map like {:host \"foo\" :port 7000}."
-  [zk-connect-string cluster-name instance-type- instance]
-  (HelixManagerFactory/getZKHelixManager (name cluster-name)
-                                         (instance-name instance)
-                                         (instance-type instance-type-)
-                                         zk-connect-string))
-
 (defn ^StateMachineEngine state-machine-engine
   "Returns a StateMachineEngine from a helix manager."
   [^HelixManager manager]
@@ -50,12 +42,31 @@
 (defn connect!
   "Connects a HelixManager."
   [^HelixManager manager]
-  (.connect manager))
+  (.connect manager)
+  manager)
 
 (defn disconnect!
   "Disconnects a HelixManager. Cannot be reused."
   [^HelixManager manager]
-  (.disconnect manager))
+  (.disconnect manager)
+  manager)
+
+(defn ^HelixManager helix-manager
+  "Creates a new Helix manager for a given cluster. Options:
+  
+  :zookeeper      a zookeeper connection string
+  :cluster        the cluster name
+  :type           the kind of instance to become (:controller, etc)
+  :instance       this instance's identity; e.g. {:host \"foo\" :port 7000}.
+  :fsms (or :fsm) a list of FSMs to register."
+  [opts]
+  (let [m (HelixManagerFactory/getZKHelixManager (name (:cluster opts))
+                                                 (instance-name (:instance opts))
+                                                 (instance-type (:type opts))
+                                                 (:zookeeper opts))]
+    (when (:fsm opts) (register-fsm! m (:fsm opts)))
+    (dorun (map (partial register-fsm! m) (:fsms opts)))
+    m))
 
 (defn generic-controller!
   "Given a manager, hooks up a GenericHelixController to it."
@@ -68,11 +79,19 @@
       (.addExternalViewChangeListener c)
       (.addControllerListener c))))
 
-(defmacro participant
-  "Defines a participant in a distributed system. Takes a zookeeper address,
-  the cluster name, and node name. This is followed by a series of state
-  machine models which will be registered with the participant. Returns
-  a HelixManager. Example:
-  
-  (participant \"localhost:2181\" :my-cluster \"localhost_7000\")"
-  [])
+(defn controller
+  "Sets up a controller manager with the default GenericController; args as for
+  (helix-manager). Returns the manager, already connected."
+  [opts]
+  (-> (assoc opts :type :controller)
+      helix-manager
+      connect!
+      generic-controller!))
+
+(defn participant
+  "Defines a participant in a distributed system; args as for (helix-manager).
+  Returns a manager, already connected."
+  [opts]
+  (-> (assoc opts :type :participant)
+      helix-manager
+      connect!))

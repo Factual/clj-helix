@@ -8,44 +8,35 @@
 (use-fixtures :once #(mute (%)))
 
 (deftest manager-test
-  (let [c (helix-manager "localhost:2181"
-                         :helix-test
-                         :controller
-                         {:host "localhost" :port 7000})
-        p1 (helix-manager "localhost:2181"
-                          :helix-test
-                          :participant
-                         {:host "localhost" :port 7001})
-        p2 (helix-manager "localhost:2181"
-                          :helix-test
-                          :participant
-                          {:host "localhost" :port 7002})
-        fsm (fsm fsm-def
-              (:slave :offline [p m c]
-                      (println p "offline"))
+  (let [fsm (fsm fsm-def
+                 (:slave :offline [p m c]
+                         (println p "offline"))
 
-              (:offline :slave [p m c]
-                       (println p "coming up...")
-                       (Thread/sleep 1000)
-                       (println p "online as slave"))
+                 (:offline :slave [p m c]
+                           (println p "coming up...")
+                           (Thread/sleep 1000)
+                           (println p "online as slave"))
 
-              (:master :slave [p m c]
-                       (println p "demoting...")
-                       (Thread/sleep 1000)
-                       (println p "demoted"))
+                 (:master :slave [p m c]
+                          (println p "demoting...")
+                          (Thread/sleep 1000)
+                          (println p "demoted"))
 
-              (:slave :master [p m c]
-                      (println p "promoting...")
-                      (Thread/sleep 1000)
-                      (println p "promoted")))]
-    (connect! c)
-    (generic-controller! c)
+                 (:slave :master [p m c]
+                         (println p "promoting...")
+                         (Thread/sleep 1000)
+                         (println p "promoted")))
 
-    (register-fsm! p1 fsm)
-    (connect! p1)
+        instance {:zookeeper "localhost:2181"
+                  :cluster   :helix-test
+                  :instance  {:host "localhost"}}
+        c (controller (assoc-in instance [:instance :port] 7000))
 
-    (register-fsm! p2 fsm)
-    (connect! p2)
+        instance (assoc instance :fsm fsm)
+        p1 (participant (assoc-in instance [:instance :port] 7001))
+        p2 (participant (assoc-in instance [:instance :port] 7002))]
+
+    (dorun (map connect! [c p1 p2]))
     
     (Thread/sleep 5000)
 
