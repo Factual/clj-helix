@@ -3,8 +3,13 @@
   (:use [clj-helix.fsm :only [state-model-definition]])
   (:import (org.apache.helix.manager.zk ZKHelixAdmin)
            (org.apache.helix.model InstanceConfig
+                                   IdealState
                                    StateModelDefinition
-                                   StateModelDefinition$Builder)))
+                                   StateModelDefinition$Builder)
+           (org.apache.helix.model.builder IdealStateBuilder
+                                           AutoModeISBuilder
+                                           AutoRebalanceModeISBuilder
+                                           CustomModeISBuilder)))
 
 (defn helix-admin
   "Creates a new helix admin, given a zookeeper address."
@@ -82,24 +87,30 @@
                        :partitions 6
                        :replicas 5
                        :state-model :MasterSlave
-                       :mode :AUTO_REBALANCE})
+                       :mode :auto-rebalance})
   
   The default number of partitions is one.
   The default number of replicas is three.
-  The default mode is AUTO_REBALANCE."
+  The default mode is :auto-rebalance."
   [^ZKHelixAdmin helix cluster opts]
   (assert (:resource opts))
   (assert (:state-model opts))
-  (.addResource helix
-                (name cluster)
-                (name (:resource opts))
-                (get opts :partitions 1)
-                (name (:state-model opts))
-                (name (get opts :mode "AUTO_REBALANCE")))
-  (.rebalance helix
-              (name cluster)
-              (name (:resource opts))
-              (get opts :replicas 3)))
+  (let [res (name (:resource opts))
+        ideal-state (.. (case (get opts :mode :auto-rebalance)
+                          :auto-rebalance (AutoRebalanceModeISBuilder. res)
+                          :custom         (CustomModeISBuilder. res)
+                          :auto           (AutoModeISBuilder. res))
+                        (setNumPartitions (get opts :partitions 1))
+                        (setMaxPartitionsPerNode (get opts :partitions 1))
+                        (setNumReplica (get opts :replicas 3))
+                        (setStateModel (name (get opts :state-model)))
+                        build)]
+
+    (.addResource helix
+                  (name cluster)
+                  (name (:resource opts))
+                  ideal-state))
+  helix)
 
 (defn clusters
   "Returns a list of clusters under /."
