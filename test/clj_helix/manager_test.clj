@@ -35,8 +35,6 @@
         instance (assoc instance :fsm fsm)
         p1 (participant (assoc-in instance [:instance :port] 7001))
         p2 (participant (assoc-in instance [:instance :port] 7002))]
-
-    (dorun (map connect! [c p1 p2]))
     
     (Thread/sleep 5000)
 
