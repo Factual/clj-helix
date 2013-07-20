@@ -1,7 +1,10 @@
 (ns clj-helix.manager
+  (:use [clj-helix.fsm :only [fsm]]
+        [clj-helix.admin :only [instance-name]])
   (:import (org.apache.helix HelixManagerFactory
                              HelixManager
                              InstanceType)
+           (org.apache.helix.controller GenericHelixController)
            (org.apache.helix.participant StateMachineEngine)))
 
 (defn instance-type
@@ -15,12 +18,10 @@
     :spectator              InstanceType/SPECTATOR))
 
 (defn ^HelixManager helix-manager
-  "Creates a new Helix manager for a given cluster. Takes an instance name
-  (typically host:port), an instance type (:controller, :participant,
-  :spectator, or :admin), and a ZK connection string."
-  [cluster-name instance-name instance-type- zk-connect-string]
+  "Creates a new Helix manager for a given cluster. Takes a zookeeper connection string, the cluster name, the kind of instance to become (:controller, :participant, :spectator, etc), and an instance map like {:host \"foo\" :port 7000}."
+  [zk-connect-string cluster-name instance-type- instance]
   (HelixManagerFactory/getZKHelixManager (name cluster-name)
-                                         (name instance-name)
+                                         (instance-name instance)
                                          (instance-type instance-type-)
                                          zk-connect-string))
 
@@ -42,3 +43,28 @@
   "Connects a HelixManager."
   [^HelixManager manager]
   (.connect manager))
+
+(defn disconnect!
+  "Disconnects a HelixManager. Cannot be reused."
+  [^HelixManager manager]
+  (.disconnect manager))
+
+(defn generic-controller!
+  "Given a manager, hooks up a GenericHelixController to it."
+  [^HelixManager manager]
+  (let [c (GenericHelixController.)]
+    (doto manager
+      (.addConfigChangeListener c)
+      (.addLiveInstanceChangeListener c)
+      (.addIdealStateChangeListener c)
+      (.addExternalViewChangeListener c)
+      (.addControllerListener c))))
+
+(defmacro participant
+  "Defines a participant in a distributed system. Takes a zookeeper address,
+  the cluster name, and node name. This is followed by a series of state
+  machine models which will be registered with the participant. Returns
+  a HelixManager. Example:
+  
+  (participant \"localhost:2181\" :my-cluster \"localhost_7000\")"
+  [])

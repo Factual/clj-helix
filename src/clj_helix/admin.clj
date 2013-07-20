@@ -1,4 +1,6 @@
 (ns clj-helix.admin
+  "Supports administrative tasks around cluster management."
+  (:use [clj-helix.fsm :only [state-model-definition]])
   (:import (org.apache.helix.manager.zk ZKHelixAdmin)
            (org.apache.helix.model InstanceConfig
                                    StateModelDefinition
@@ -9,11 +11,16 @@
   [zookeeper-address]
   (ZKHelixAdmin. zookeeper-address))
 
-(defn instance-config
+(defn instance-name
+  "Turns an instance map like {:host \"foo\" :port 7000} into a node identifier
+  like \"foo_7000\"."
+  [node]
+  (str (:host node) ":" (:port node)))
+
+(defn make-instance-config
   "Constructs an InstanceConfig from a map like
 
-  {:name \"localhost_1234\"
-   :host \"localhost\"
+  {:host \"localhost\"
    :port 1234
    :enabled? true}
 
@@ -21,10 +28,7 @@
   [m]
   (assert (:host m))
   (assert (:port m))
-  (let [config (doto (-> m
-                         (get :name (str (:host m) "_" (:port m)))
-                         name
-                         InstanceConfig.)
+  (let [config (doto (-> m instance-name InstanceConfig.)
                  (.setHostName (:host m))
                  (.setPort (str (:port m)))
                  (.setInstanceEnabled (get m :enabled? true)))
@@ -33,44 +37,6 @@
       (when-not (#{:name :host :port :enabled?} k)
         (.setSimpleField record k v)))
     config))
-
-(defn state-model-definition
-  "Creates a new StateModelDefinition. For example:
-
-  (state-model-definition :my-state-model
-    {:master {:priority 1
-              :transitions :slave
-              :upper-bound 1}
-     :slave  {:priority 2
-              :transitions [:master :offline]
-              :upper-bound :R}
-     :offline {:transitions :slave
-               :initial? true}})"
-  [model-name model]
-  (assert (= 1 (count (filter :initial? (vals model)))))
-  (let [b (StateModelDefinition$Builder. (name model-name))]
-    (doseq [[state d] model]
-      (let [state (name state)]
-        ; Priority
-        (if (:priority d)
-          (.addState b state (:priority d))
-          (.addState b state))
-        
-        ; Initial state
-        (when (:initial? d)
-          (.initialState b state))
-
-        ; Transitions
-        (let [ts (:transitions d)]
-          (doseq [to-state (if (sequential? ts) ts [ts])]
-            (.addTransition b state (name to-state))))
-
-       ; Constraints
-       (let [bound (:upper-bound d)]
-         (cond (nil? bound)    nil
-               (number? bound) (.upperBound b state bound)
-               :else           (.dynamicUpperBound b state (name bound))))))
-   (.build b)))
 
 (defn add-cluster
   "Adds a new cluster to a helix manager. Idempotent."
@@ -87,17 +53,16 @@
 (defn add-instance
   "Adds an instance map to a HelixAdmin."
   [^ZKHelixAdmin helix cluster-name instance-map]
-  (.addInstance helix (name cluster-name) (instance-config instance-map))
+  (.addInstance helix (name cluster-name) (make-instance-config instance-map))
   helix)
 
-(defn add-state-model-def
-  "Adds a state model (as accepted by state-model-definition) to the given
-  Helix admin."
-  [^ZKHelixAdmin helix cluster-name model-name state-model]
+(defn add-fsm-definition
+  "Adds an FSM definitio to the given Helix admin."
+  [^ZKHelixAdmin helix cluster-name fsm-def]
   (.addStateModelDef helix
                      (name cluster-name)
-                     (name model-name)
-                     (state-model-definition model-name state-model))
+                     (name (:name fsm-def))
+                     (state-model-definition fsm-def))
   helix)
 
 (defn add-resource
@@ -106,17 +71,52 @@
   (add-resource helix :my-cluster
                       {:resource :my-db
                        :partitions 6
+                       :replicas 5
                        :state-model :MasterSlave
                        :mode :AUTO_REBALANCE})
   
+  The default number of partitions is one.
+  The default number of replicas is three.
   The default mode is AUTO_REBALANCE."
   [^ZKHelixAdmin helix cluster opts]
   (assert (:resource opts))
-  (assert (:partitions opts))
   (assert (:state-model opts))
   (.addResource helix
                 (name cluster)
                 (name (:resource opts))
-                (:partitions opts)
+                (get opts :partitions 1)
                 (name (:state-model opts))
-                (name (get opts :mode "AUTO_REBALANCE"))))
+                (name (get opts :mode "AUTO_REBALANCE")))
+  (.rebalance helix
+              (name cluster)
+              (name (:resource opts))
+              (get opts :replicas 3)))
+
+(defn clusters
+  "Returns a list of clusters under /."
+  [^ZKHelixAdmin helix]
+  (.getClusters helix))
+
+(defn instances
+  "A list of the instances in a given cluster."
+  [^ZKHelixAdmin helix cluster-name]
+  (.getInstancesInCluster helix (name cluster-name)))
+
+(defn instance-config
+  "The config for an instance, by name."
+  [^ZKHelixAdmin helix cluster-name instance-name]
+  (.getInstanceConfig helix (name cluster-name) (name instance-name)))
+
+(defn resources
+  "A list of resources."
+  [^ZKHelixAdmin helix cluster-name]
+  (.getResourcesInCluster helix (name cluster-name)))
+
+(defn resource-ideal-state
+  "The ideal state for a resource."
+  [^ZKHelixAdmin helix cluster-name resource-name]
+  (.getResourceIdealState helix (name cluster-name) (name resource-name)))
+
+(defn resource-external-view
+  [^ZKHelixAdmin helix cluster-name resource-name]
+  (.getResourceExternalView helix (name cluster-name) (name resource-name)))
