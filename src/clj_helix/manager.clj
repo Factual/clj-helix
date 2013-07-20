@@ -39,6 +39,14 @@
                               state-model-factory)
   manager)
 
+(defn register-fsm!
+  "Registers an FSM with the given manager's state machine engine. clj-helix
+  FSMs encode their state model name, so it can be omitted here."
+  [^HelixManager manager fsm]
+  (register-state-model-factory! manager
+                                 (:name (.definition fsm))
+                                 fsm))
+
 (defn connect!
   "Connects a HelixManager."
   [^HelixManager manager]

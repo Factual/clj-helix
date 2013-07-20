@@ -1,7 +1,8 @@
 (ns clj-helix.manager-test
   (:require [clojure.test :refer :all]
             [clj-helix.logging :refer [mute]]
-            [clj-helix.state-model :refer [state-model-factory]]
+            [clj-helix.fsm :refer [fsm]]
+            [clj-helix.admin-test :refer [fsm-def]]
             [clj-helix.manager :refer :all]))
 
 (use-fixtures :once #(mute (%)))
@@ -19,9 +20,7 @@
                           :helix-test
                           :participant
                           {:host "localhost" :port 7002})
-        smf (state-model-factory
-              [:offline :slave :master]
-
+        fsm (fsm fsm-def
               (:slave :offline [p m c]
                       (println p "offline"))
 
@@ -42,10 +41,10 @@
     (connect! c)
     (generic-controller! c)
 
-    (register-state-model-factory! p1 :my-state-model smf)
+    (register-fsm! p1 fsm)
     (connect! p1)
 
-    (register-state-model-factory! p2 :my-state-model smf)
+    (register-fsm! p2 fsm)
     (connect! p2)
     
     (Thread/sleep 5000)

@@ -225,14 +225,21 @@ public class #{class-name} extends StateModel {
              (into {}))]
     `(state-model* ~definition ~transitions)))
 
+(definterface FSM
+  (definition []))
+
 (defmacro fsm
   "Takes the same arguments as state-model, and expands into an expression
   which yields an instance of an anonymous StateModelFactory subclass, which
   generates instances of the given state model when asked.
   
   Go home Java, you're drunk."
-  [& forms]
-  `(let [constructor# (state-model ~@forms)]
-     (proxy [StateModelFactory] []
+  [fsm-def & transitions]
+  ; Capture the FSM definition so it can be extracted from the factory later.
+  `(let [fsm-def# ~fsm-def
+         constructor# (state-model fsm-def# ~@transitions)]
+     (proxy [StateModelFactory FSM] []
+       (definition [] fsm-def#)
+
        (createNewStateModel [partition-id#]
          (constructor# partition-id#)))))
