@@ -15,7 +15,16 @@
   "Turns an instance map like {:host \"foo\" :port 7000} into a node identifier
   like \"foo_7000\"."
   [node]
+  (assert (:host node))
+  (assert (:port node))
   (str (:host node) ":" (:port node)))
+
+(defn instance-config->map
+  "Turns an InstanceConfig into a normal Clojure map."
+  [^InstanceConfig instance]
+  {:host     (.getHostName instance)
+   :port     (.getPort instance)
+   :enabled? (.getInstanceEnabled instance)})
 
 (defn make-instance-config
   "Constructs an InstanceConfig from a map like

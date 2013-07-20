@@ -95,3 +95,6 @@
   (-> (assoc opts :type :participant)
       helix-manager
       connect!))
+
+; Force demotion
+; (.. manager getClusterManagementTool (enablePartition 
