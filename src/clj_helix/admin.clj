@@ -113,7 +113,7 @@
   auto_rebalance mode, because ???reasons???"
   [^ZKHelixAdmin helix cluster resource]
   (.rebalance helix (name cluster) (name resource)
-              (.getNumPartitions (resource-ideal-state helix cluster resource))))
+              (.getReplicas (resource-ideal-state helix cluster resource))))
 
 (defn add-resource
   "Adds a resource to the given helix admin. Helix is a ZKHelixAdmin. Example:
@@ -148,5 +148,5 @@
                   ideal-state)
 
     ; Initial rebalance is mandatory, not sure why
-    (.rebalance helix (name cluster) (name (:resource opts)) (get opts :replicas 3))
+    (rebalance! helix cluster (:resource opts))
   helix))
