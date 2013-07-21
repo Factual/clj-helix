@@ -52,6 +52,35 @@
         (.setSimpleField record k v)))
     config))
 
+(defn clusters
+  "Returns a list of clusters under /."
+  [^ZKHelixAdmin helix]
+  (.getClusters helix))
+
+(defn instances
+  "A list of the instances in a given cluster."
+  [^ZKHelixAdmin helix cluster-name]
+  (.getInstancesInCluster helix (name cluster-name)))
+
+(defn instance-config
+  "The config for an instance, by name."
+  [^ZKHelixAdmin helix cluster-name instance-name]
+  (.getInstanceConfig helix (name cluster-name) (name instance-name)))
+
+(defn resources
+  "A list of resources."
+  [^ZKHelixAdmin helix cluster-name]
+  (.getResourcesInCluster helix (name cluster-name)))
+
+(defn resource-ideal-state
+  "The ideal state for a resource."
+  [^ZKHelixAdmin helix cluster-name resource-name]
+  (.getResourceIdealState helix (name cluster-name) (name resource-name)))
+
+(defn resource-external-view
+  [^ZKHelixAdmin helix cluster-name resource-name]
+  (.getResourceExternalView helix (name cluster-name) (name resource-name)))
+
 (defn add-cluster
   "Adds a new cluster to a helix manager. Idempotent."
   [^ZKHelixAdmin helix cluster-name]
@@ -112,31 +141,9 @@
                   ideal-state))
   helix)
 
-(defn clusters
-  "Returns a list of clusters under /."
-  [^ZKHelixAdmin helix]
-  (.getClusters helix))
-
-(defn instances
-  "A list of the instances in a given cluster."
-  [^ZKHelixAdmin helix cluster-name]
-  (.getInstancesInCluster helix (name cluster-name)))
-
-(defn instance-config
-  "The config for an instance, by name."
-  [^ZKHelixAdmin helix cluster-name instance-name]
-  (.getInstanceConfig helix (name cluster-name) (name instance-name)))
-
-(defn resources
-  "A list of resources."
-  [^ZKHelixAdmin helix cluster-name]
-  (.getResourcesInCluster helix (name cluster-name)))
-
-(defn resource-ideal-state
-  "The ideal state for a resource."
-  [^ZKHelixAdmin helix cluster-name resource-name]
-  (.getResourceIdealState helix (name cluster-name) (name resource-name)))
-
-(defn resource-external-view
-  [^ZKHelixAdmin helix cluster-name resource-name]
-  (.getResourceExternalView helix (name cluster-name) (name resource-name)))
+(defn rebalance!
+  "Rebalances a resource. Must be called after adding nodes, even in
+  auto_rebalance mode, because ???reasons???"
+  [^ZKHelixAdmin helix cluster resource]
+  (.rebalance helix (name cluster) (name resource)
+              (.getNumPartitions (resource-ideal-state helix cluster resource))))

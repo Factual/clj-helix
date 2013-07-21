@@ -18,14 +18,15 @@
 (deftest basic-test
   (drop-cluster h :helix-test)
   (add-cluster h :helix-test)
+  (add-fsm-definition h :helix-test fsm-def)
+  (add-resource h :helix-test {:resource "a-thing"
+                               :partitions 1
+                               :replicas 3
+                               :state-model :my-state-model})
   (add-instance h :helix-test {:host "localhost"
                                :port 7000})
   (add-instance h :helix-test {:host "localhost"
                                :port 7001})
   (add-instance h :helix-test {:host "localhost"
                                :port 7002})
-  (add-fsm-definition h :helix-test fsm-def)
-  (add-resource h :helix-test {:resource "a-thing"
-                               :partitions 1
-                               :replicas 3
-                               :state-model :my-state-model}))
+  (rebalance! h :helix-test :a-thing))
