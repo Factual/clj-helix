@@ -148,5 +148,5 @@
                   ideal-state)
 
     ; Initial rebalance is mandatory, not sure why
-    (rebalance! helix cluster (:resource opts))
+    (.rebalance helix (name cluster) (name (:resource opts)) (get opts :replicas 3))
   helix))
