@@ -108,6 +108,13 @@
                      (state-model-definition fsm-def))
   helix)
 
+(defn rebalance!
+  "Rebalances a resource. Must be called after adding nodes, even in
+  auto_rebalance mode, because ???reasons???"
+  [^ZKHelixAdmin helix cluster resource]
+  (.rebalance helix (name cluster) (name resource)
+              (.getNumPartitions (resource-ideal-state helix cluster resource))))
+
 (defn add-resource
   "Adds a resource to the given helix admin. Helix is a ZKHelixAdmin. Example:
   
@@ -138,12 +145,8 @@
     (.addResource helix
                   (name cluster)
                   (name (:resource opts))
-                  ideal-state))
-  helix)
+                  ideal-state)
 
-(defn rebalance!
-  "Rebalances a resource. Must be called after adding nodes, even in
-  auto_rebalance mode, because ???reasons???"
-  [^ZKHelixAdmin helix cluster resource]
-  (.rebalance helix (name cluster) (name resource)
-              (.getNumPartitions (resource-ideal-state helix cluster resource))))
+    ; Initial rebalance is mandatory, not sure why
+    (rebalance! helix cluster (:resource opts))
+  helix))

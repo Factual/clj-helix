@@ -28,5 +28,4 @@
   (add-instance h :helix-test {:host "localhost"
                                :port 7001})
   (add-instance h :helix-test {:host "localhost"
-                               :port 7002})
-  (rebalance! h :helix-test :a-thing))
+                               :port 7002}))
