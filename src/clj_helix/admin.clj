@@ -112,8 +112,16 @@
   "Rebalances a resource. Must be called after adding nodes, even in
   auto_rebalance mode, because ???reasons???"
   [^ZKHelixAdmin helix cluster resource]
-  (.rebalance helix (name cluster) (name resource)
-              (.getReplicas (resource-ideal-state helix cluster resource))))
+  (->> resource
+       (resource-ideal-state helix cluster)
+       .getReplicas
+       ; yo apparently Replicas can be a magic letter like N, lmao if you do
+       ; that
+       (Integer.)
+       (.rebalance helix (name cluster) (name resource))))
+
+; forgo rebalance by doing...
+; foreach (p in partitions) builder.addPartition("<your own convention here>");
 
 (defn add-resource
   "Adds a resource to the given helix admin. Helix is a ZKHelixAdmin. Example:
