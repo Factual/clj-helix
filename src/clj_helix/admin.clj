@@ -119,7 +119,7 @@
   helix)
 
 (defn rebalance!
-  "Rebalances a resource. Must be called after adding nodes, even in
+  "Rebalances a resource. Must be called after adding a resource, even in
   auto_rebalance mode, because ???reasons???"
   [^ZKHelixAdmin helix cluster resource]
   (->> resource
@@ -139,13 +139,15 @@
   (add-resource helix :my-cluster
                       {:resource :my-db
                        :partitions 6
+                       :max-partitions-per-node 3
                        :replicas 5
                        :state-model :MasterSlave
                        :mode :auto-rebalance})
   
   The default number of partitions is one.
   The default number of replicas is three.
-  The default mode is :auto-rebalance."
+  The default mode is :auto-rebalance.
+  Max-partitions-per-node defaults to the number of partitions."
   [^ZKHelixAdmin helix cluster opts]
   (assert (:resource opts))
   (assert (:state-model opts))
@@ -155,7 +157,10 @@
                           :custom         (CustomModeISBuilder. res)
                           :auto           (AutoModeISBuilder. res))
                         (setNumPartitions (get opts :partitions 1))
-                        (setMaxPartitionsPerNode (get opts :partitions 1))
+                        (setMaxPartitionsPerNode
+                          (or (:max-partitions-per-node opts)
+                              (:partitions opts)
+                              1))
                         (setNumReplica (get opts :replicas 3))
                         (setStateModel (name (get opts :state-model)))
                         build)]
