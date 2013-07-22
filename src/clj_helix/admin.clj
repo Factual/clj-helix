@@ -79,7 +79,17 @@
 
 (defn resource-external-view
   [^ZKHelixAdmin helix cluster-name resource-name]
-  (.getResourceExternalView helix (name cluster-name) (name resource-name)))
+  (let [e (.getResourceExternalView helix
+                                    (name cluster-name)
+                                    (name resource-name))]
+    {:partitions (->> e
+                     .getPartitionSet
+                     (reduce (fn [acc part]
+                               (assoc! acc part (.getStateMap e part)))
+                             (transient {}))
+                      persistent!)
+     :resource   (.getResourceName e)
+     :valid?     (.isValid e)}))
 
 (defn add-cluster
   "Adds a new cluster to a helix manager. Idempotent."
