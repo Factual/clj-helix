@@ -72,7 +72,7 @@
       ; Done
       (assoc d :states states))))
 
-(defn state-model-definition
+(defn ^StateModelDefinition state-model-definition
   "Takes a Clojure FSM definition and turns it into a StateModelDefinition."
   [definition]
   (let [model-name (:name definition)
@@ -192,7 +192,7 @@ public class #{class-name} extends StateModel {
     ; Assign static transition functions
     (doseq [[[old new] f] transitions]
       (let [field (str (transition-name old new) "Fn")]
-        (-> class-name
+        (-> ^Class class-name
             (.getDeclaredField field)
             (.set nil f))))
 

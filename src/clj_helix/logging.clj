@@ -15,25 +15,28 @@
 
 (defmacro mute-jdk [& body]
   `(let [loggers# (all-jdk-loggers)
-         levels#  (map #(.getLevel %) loggers#)]
+         levels#  (map (fn [l#] (.getLevel ^java.util.logging.Logger l#))
+                       loggers#)]
      (try
-       (doseq [l# loggers#]
+       (doseq [^java.util.logging.Logger l# loggers#]
          (.setLevel l# java.util.logging.Level/OFF))
        ~@body
        (finally
-         (dorun (map (fn [logger# level#] (.setLevel logger# level#))
+         (dorun (map (fn [^java.util.logging.Logger logger# level#]
+                       (.setLevel logger# level#))
                      loggers#
                      levels#))))))
 
 (defmacro mute-log4j [& body]
   `(let [loggers# (all-log4j-loggers)
-         levels#  (map #(.getLevel %) loggers#)]
+         levels#  (map #(.getLevel ^org.apache.log4j.Logger %) loggers#)]
      (try
        (doseq [l# loggers#]
-         (.setLevel l# org.apache.log4j.Level/OFF))
+         (.setLevel ^org.apache.log4j.Logger l# org.apache.log4j.Level/OFF))
        ~@body
        (finally
-         (dorun (map (fn [logger# level#] (.setLevel logger# level#))
+         (dorun (map (fn [^org.apache.log4j.Logger logger# level#]
+                       (.setLevel logger# level#))
                      loggers#
                      levels#))))))
 
@@ -41,3 +44,5 @@
   `(mute-jdk
      (mute-log4j
        ~@body)))
+
+(mute)

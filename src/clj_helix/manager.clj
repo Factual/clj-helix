@@ -1,7 +1,8 @@
 (ns clj-helix.manager
   (:use [clj-helix.fsm :only [fsm]]
         [clj-helix.admin :only [instance-name]])
-  (:import (org.apache.helix HelixManagerFactory
+  (:import (clj_helix.fsm FSM)
+           (org.apache.helix HelixManagerFactory
                              HelixManager
                              InstanceType)
            (org.apache.helix.controller GenericHelixController)
@@ -34,7 +35,7 @@
 (defn register-fsm!
   "Registers an FSM with the given manager's state machine engine. clj-helix
   FSMs encode their state model name, so it can be omitted here."
-  [^HelixManager manager fsm]
+  [^HelixManager manager ^FSM fsm]
   (register-state-model-factory! manager
                                  (:name (.definition fsm))
                                  fsm))

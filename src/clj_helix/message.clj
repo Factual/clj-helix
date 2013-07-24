@@ -30,7 +30,7 @@
     (.setInstanceName (get criteria :instance "*"))
     (.setSelfExcluded(get criteria :self-excluded? true))))
 
-(def evaluator (CriteriaEvaluator.))
+(def ^CriteriaEvaluator evaluator (CriteriaEvaluator.))
 
 (defn matching
   "Finds instances matching the given Criteria."

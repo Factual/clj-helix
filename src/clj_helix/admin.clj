@@ -13,10 +13,10 @@
 
 (defn helix-admin
   "Creates a new helix admin, given a zookeeper address."
-  [zookeeper-address]
+  [^String zookeeper-address]
   (ZKHelixAdmin. zookeeper-address))
 
-(defn instance-name
+(defn ^String instance-name
   "Turns an instance map like {:host \"foo\" :port 7000} into a node identifier
   like \"foo_7000\"."
   [node]
@@ -72,7 +72,7 @@
   [^ZKHelixAdmin helix cluster-name]
   (.getResourcesInCluster helix (name cluster-name)))
 
-(defn resource-ideal-state
+(defn ^IdealState resource-ideal-state
   "The ideal state for a resource."
   [^ZKHelixAdmin helix cluster-name resource-name]
   (.getResourceIdealState helix (name cluster-name) (name resource-name)))
@@ -152,10 +152,11 @@
   (assert (:resource opts))
   (assert (:state-model opts))
   (let [res (name (:resource opts))
-        ideal-state (.. (case (get opts :mode :auto-rebalance)
-                          :auto-rebalance (AutoRebalanceModeISBuilder. res)
-                          :custom         (CustomModeISBuilder. res)
-                          :auto           (AutoModeISBuilder. res))
+        builder (case (get opts :mode :auto-rebalance)
+                  :auto-rebalance (AutoRebalanceModeISBuilder. res)
+                  :custom         (CustomModeISBuilder. res)
+                  :auto           (AutoModeISBuilder. res))
+        ideal-state (.. ^IdealStateBuilder builder 
                         (setNumPartitions (get opts :partitions 1))
                         (setMaxPartitionsPerNode
                           (or (:max-partitions-per-node opts)
