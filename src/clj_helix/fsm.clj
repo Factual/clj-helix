@@ -67,7 +67,7 @@
       (dorun (map validate-state-name state-names))
 
       ; No transitions to states that aren't defined.
-      (assert (= state-names (set (keys states))))
+      ;(assert (= state-names (set (keys states))))
 
       ; Done
       (assoc d :states states))))
