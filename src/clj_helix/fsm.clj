@@ -110,8 +110,14 @@
 (defn initial-state
   "Given an FSM definition, returns the initial state."
   [definition]
-  (when-let [state (some :initial? (:states definition))]
-    (key state)))
+  (let [state (->> definition
+                   :states
+                   (filter (comp :initial? val))
+                   first
+                   key)]
+    (assert state)
+    state))
+
 
 (defn transition-name
   "A method name (string) for a state transition."
@@ -127,7 +133,7 @@
     (interpolating
       "public static IFn #{method-name}Fn;
 
-      @Transition(from = \"#{old}\", to = \"#{new}\")
+      @Transition(from = \"#{(name old)}\", to = \"#{(name new)}\")
       public Object #{method-name}(Message m, NotificationContext c) {
         return #{method-name}Fn.invoke(partitionId, m, c);
       }")))
@@ -148,7 +154,7 @@
                        str)
         ; Nothing says fun like mangling strings through three layers of
         ; languages!
-        initial-state (initial-state fsm-def)
+        initial-state (name (initial-state fsm-def))
         
         states-str  (str "{"
                          (->> fsm-def
@@ -180,6 +186,7 @@ public class #{class-name} extends StateModel {
 
   #{state-transitions}
 }")]
+    (println class-body)
     (javastar/compile-java (str "clj_helix.state_model." class-name)
                            class-body)))
 

@@ -11,4 +11,9 @@
             (:on  :off [part msg ctx] [x :off part])
             (:off :on  [part msg ctx] [x :on part]))
         m (.createNewStateModel f "p1")]
-    (is (= [2 :on "p1"] (.onBecomeonFromoff m nil nil)))))
+
+    (testing "initial state"
+      (is (= :off (initial-state d))))
+
+    (testing "state model"
+      (is (= [2 :on "p1"] (.onBecomeonFromoff m nil nil))))))
