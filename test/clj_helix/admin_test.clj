@@ -12,8 +12,9 @@
                                        :slave  {:priority 2
                                                 :transitions [:master :offline]
                                                 :upper-bound :R}
-                                       :offline {:transitions :slave
-                                                 :initial? true}}}))
+                                       :offline {:transitions [:slave :DROPPED]
+                                                 :initial? true}
+                                       :DROPPED {}}}))
 
 (deftest basic-test
   (drop-cluster h :helix-test)

@@ -8,7 +8,8 @@
                                                       StateModelFactory
                                                       Transition))
   (:require [alandipert.interpol8 :refer [interpolating]]
-            [tailrecursion.javastar :as javastar]))
+            [tailrecursion.javastar :as javastar]
+            [clojure.set :as set]))
 
 (defn validate-state-name
   "Throws if the state name isn't a valid state name."
@@ -19,6 +20,27 @@
     state
     (throw (IllegalArgumentException.
              (str "Invalid state: " (pr-str state))))))
+
+(defn adjacency-map
+  "Turns an FSM definition into an adjacency map of states to lists of target
+  states."
+  [fsm-def]
+  (reduce (fn [adjacent [state spec]]
+            (assoc adjacent state (:transitions spec)))
+          {}
+          (:states fsm-def)))
+
+(defn reachable-states
+  "Given an FSM def and an initial state, returns a list of all states
+  reachable from that initial state."
+  ([fsm-def initial]
+   (reachable-states (adjacency-map fsm-def) #{initial} #{initial}))
+  ([adjacent visited edge]
+   (let [expanded (set (mapcat adjacent edge))
+         unvisited (set/difference expanded visited)]
+     (if (empty? unvisited)
+       (set/union visited expanded)
+       (recur adjacent (set/union visited expanded) unvisited)))))
 
 (defn fsm-definition
   "An FSM definition is a named collection of states, describing their
@@ -45,16 +67,15 @@
     ; Has states
     (assert (map? states))
 
-    ; Exactly one initial state.
-    (assert (= 1 (count (filter :initial? (vals (:states d))))))
-
     ; Normalize transitions
     (let [states (->> states
                       (map (fn [[k v]]
                              [k (assoc v :transitions
-                                       (if (sequential? (:transitions v))
-                                         (:transitions v)
-                                         [(:transitions v)]))]))
+                                       (let [t (:transitions v)]
+                                         (cond
+                                           (nil? t) []
+                                           (sequential? t) t
+                                           :else [t])))]))
                       (into {}))
 
           ; Compute all state names
@@ -62,12 +83,26 @@
                            (concat (mapcat :transitions (vals states)))
                            (remove nil?)
                            set)]
-
+    
+      ; Exactly one initial state.
+      (let [initials (->> d :states vals (filter :initial?) count)]
+        (assert (= 1 initials) 
+                (str "needs exactly one initial state; has " initials)))
+              
       ; Validate state names
       (dorun (map validate-state-name state-names))
 
+      ; Has a DROPPED state
+      (assert (:DROPPED states) "must have a :DROPPED state")
+
+      ; All states can reach DROPPED
+      (doseq [state state-names]
+        (assert (contains? (reachable-states {:states states} state)
+                         :DROPPED)
+                (str "state " state " has no path to :DROPPED")))
+
       ; No transitions to states that aren't defined.
-      ;(assert (= state-names (set (keys states))))
+      (assert (= state-names (set (keys states))))
 
       ; Done
       (assoc d :states states))))
@@ -186,7 +221,6 @@ public class #{class-name} extends StateModel {
 
   #{state-transitions}
 }")]
-    (println class-body)
     (javastar/compile-java (str "clj_helix.state_model." class-name)
                            class-body)))
 
