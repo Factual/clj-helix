@@ -44,5 +44,3 @@
   `(mute-jdk
      (mute-log4j
        ~@body)))
-
-(mute)
