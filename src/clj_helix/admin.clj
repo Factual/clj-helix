@@ -28,7 +28,7 @@
   "Turns an InstanceConfig into a normal Clojure map."
   [^InstanceConfig instance]
   {:host     (.getHostName instance)
-   :port     (.getPort instance)
+   :port     (Integer. (.getPort instance))
    :enabled? (.getInstanceEnabled instance)})
 
 (defn make-instance-config
