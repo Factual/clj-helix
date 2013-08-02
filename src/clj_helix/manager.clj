@@ -97,5 +97,10 @@
       helix-manager
       connect!))
 
+(defn ^HelixAdmin admin
+  "Returns a HelixAdmin associated with a manager."
+  [^HelixManager manager]
+  (.getClusterManagementTool manager))
+
 ; Force demotion
 ; (.. manager getClusterManagementTool (enablePartition 
