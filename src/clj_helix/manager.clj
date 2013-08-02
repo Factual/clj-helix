@@ -4,6 +4,7 @@
   (:import (clj_helix.fsm FSM)
            (org.apache.helix HelixManagerFactory
                              HelixManager
+                             HelixAdmin
                              InstanceType)
            (org.apache.helix.controller GenericHelixController)
            (org.apache.helix.participant StateMachineEngine)))
@@ -101,6 +102,11 @@
   "Returns a HelixAdmin associated with a manager."
   [^HelixManager manager]
   (.getClusterManagementTool manager))
+
+(defn cluster-name
+  "Gets the name of the cluster this manager is associated with."
+  [^HelixManager manager]
+  (.getClusterName manager))
 
 ; Force demotion
 ; (.. manager getClusterManagementTool (enablePartition 
