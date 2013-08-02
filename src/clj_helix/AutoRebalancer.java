@@ -118,7 +118,6 @@ public class AutoRebalancer implements Rebalancer {
       // compute orphaned replica that are not assigned to any node
       Set<Replica> orphaned;
       orphaned = computeOrphaned(states, currentMapping, nodeMap, preferredAssignment);
-      System.out.println("orphan = \n" + orphaned);
 
       // from current mapping derive the ones not in preferred location
       Map<Replica, Node> existingNonPreferredAssignment;
