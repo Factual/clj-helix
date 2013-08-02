@@ -101,7 +101,7 @@
 (defn ^HelixAdmin admin
   "Returns a HelixAdmin associated with a manager."
   [^HelixManager manager]
-  (.getClusterManagementTool manager))
+  (.getClusterManagmentTool manager))
 
 (defn cluster-name
   "Gets the name of the cluster this manager is associated with."
