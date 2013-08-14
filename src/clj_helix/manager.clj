@@ -6,6 +6,7 @@
                              HelixManager
                              HelixAdmin
                              InstanceType)
+           (org.apache.helix.store.zk ZkHelixPropertyStore)
            (org.apache.helix.controller GenericHelixController)
            (org.apache.helix.participant StateMachineEngine)))
 
@@ -108,5 +109,7 @@
   [^HelixManager manager]
   (.getClusterName manager))
 
-; Force demotion
-; (.. manager getClusterManagementTool (enablePartition 
+(defn ^ZkHelixPropertyStore property-store
+  "Returns the PropertyStore for this manager."
+  [^HelixManager manager]
+  (.getHelixPropertyStore manager))

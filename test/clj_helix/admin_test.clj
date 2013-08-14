@@ -1,6 +1,7 @@
 (ns clj-helix.admin-test
   (:require [clojure.test :refer :all]
-            [clj-helix.fsm :refer [fsm-definition]]
+            [clj-helix.fsm :refer [fsm-definition fsm]]
+            [clj-helix.manager :refer [controller participant]]
             [clj-helix.admin :refer :all]))
 
 (def h (helix-admin "localhost:2181"))
@@ -15,6 +16,33 @@
                                        :offline {:transitions [:slave :DROPPED]
                                                  :initial? true}
                                        :DROPPED {}}}))
+
+(defn instance [context]
+  (.. context getManager getInstanceName))
+
+(defn make-fsm [state]
+  (fsm fsm-def
+       (:offline   :slave [p m c] (swap! state assoc [(instance c) p] :slave))
+       (:slave    :master [p m c] (swap! state assoc [(instance c) p] :master))
+       (:master    :slave [p m c] (swap! state assoc [(instance c) p] :slave))
+       (:slave   :offline [p m c] (swap! state dissoc [(instance c) p]))))
+
+(defn controller+
+  "Constructs a new controller."
+  [port]
+  (controller {:zookeeper "localhost:2181"
+               :cluster   :helix-test
+               :instance  {:host "localhost"
+                           :port port}}))
+
+(defn participant+
+  "Constructs a new participant."
+  [port opts]
+  (participant (merge {:zookeeper "localhost:2181"
+                       :cluster   :helix-test
+                       :instance  {:host "localhost"
+                                   :port port}}
+                      opts)))
 
 (deftest basic-test
   (drop-cluster h :helix-test)
