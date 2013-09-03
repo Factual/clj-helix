@@ -1,6 +1,12 @@
 # clj-helix
 
-A Clojure wrapper around Apache Helix.
+A Clojure wrapper around [Apache Helix](http://helix.incubator.apache.org/), a
+library for managing cluster state in distributed systems. API is incomplete
+and subject to change, but the basics are in place and work correctly.
+
+## Installation
+
+Via [clojars](https://clojars.org/factual/clj-helix).
 
 ## Usage
 
