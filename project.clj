@@ -1,6 +1,6 @@
-(defproject clj-helix "0.1.0-SNAPSHOT"
+(defproject com.factual/clj-helix "0.1.0"
   :description "Clojure bindings for Apache Helix"
-  :url "http://github.com/aphyr/clj-helix"
+  :url "http://github.com/factual/clj-helix"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
