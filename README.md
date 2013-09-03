@@ -79,7 +79,7 @@ Via [clojars](https://clojars.org/factual/clj-helix).
 ; The participant will start reacting to state changes coordinated by the
 ; controller.
 
- When you're ready to quit, shut down the participant or
+; When you're ready to quit, shut down the participant or
 ; controller:
 (shutdown! p)
 (shutdown! c)
@@ -93,6 +93,7 @@ Via [clojars](https://clojars.org/factual/clj-helix).
 
 ; Find peers for a specific partition
 (instances r :my-app :some-resouce "some-resource_2")
+```
 
 ## License
 
