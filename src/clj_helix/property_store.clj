@@ -4,8 +4,7 @@
   No idea how any of this API is supposed to work, and I can't get it to do
   anything."
   (:refer-clojure :exclude [get swap!])
-  (:import (org.apache.helix.store.zk ZkHelixPropertyStore
-                                      ZNRecord)
+  (:import (org.apache.helix.store.zk ZkHelixPropertyStore)
            (org.apache.helix AccessOption)
            (org.apache.zookeeper.data Stat)
            (org.I0Itec.zkclient DataUpdater)))
