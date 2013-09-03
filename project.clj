@@ -1,4 +1,4 @@
-(defproject com.factual/clj-helix "0.1.0"
+(defproject factual/clj-helix "0.1.0"
   :description "Clojure bindings for Apache Helix"
   :url "http://github.com/factual/clj-helix"
   :license {:name "Eclipse Public License"
