@@ -165,13 +165,6 @@
                         (setNumReplica (get opts :replicas 3))
                         (setStateModel (name (get opts :state-model)))
                         build)]
-
-    ; The stock rebalancer is broken, but Kishore wrote this one which
-    ; might help!
-    (.setRebalancerClassName
-      ideal-state
-      "org.apache.helix.controller.rebalancer.AutoRebalancer")
-
     (.addResource helix
                   (name cluster)
                   (name (:resource opts))
